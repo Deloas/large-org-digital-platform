@@ -2,6 +2,7 @@ package org.largeorg.platform.system.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import jakarta.validation.Valid;
+import org.largeorg.platform.audit.annotation.AuditLog;
 import org.largeorg.platform.common.Result;
 import org.largeorg.platform.system.dto.MenuCreateRequest;
 import org.largeorg.platform.system.dto.MenuUpdateRequest;
@@ -40,6 +41,7 @@ public class MenuController {
         return Result.success(menuService.getById(id));
     }
 
+    @AuditLog(module = "菜单管理", action = "新增菜单")
     @PostMapping
     @SaCheckPermission("sys:menu:create")
     public Result<Void> create(@Valid @RequestBody MenuCreateRequest request) {
@@ -47,6 +49,7 @@ public class MenuController {
         return Result.success();
     }
 
+    @AuditLog(module = "菜单管理", action = "修改菜单")
     @PutMapping("/{id}")
     @SaCheckPermission("sys:menu:update")
     public Result<Void> update(@PathVariable Long id, @RequestBody MenuUpdateRequest request) {
@@ -54,6 +57,7 @@ public class MenuController {
         return Result.success();
     }
 
+    @AuditLog(module = "菜单管理", action = "删除菜单")
     @DeleteMapping("/{id}")
     @SaCheckPermission("sys:menu:delete")
     public Result<Void> delete(@PathVariable Long id) {

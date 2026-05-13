@@ -2,6 +2,7 @@ package org.largeorg.platform.system.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import jakarta.validation.Valid;
+import org.largeorg.platform.audit.annotation.AuditLog;
 import org.largeorg.platform.common.Result;
 import org.largeorg.platform.system.dto.AssignPermissionRequest;
 import org.largeorg.platform.system.dto.RoleCreateRequest;
@@ -34,6 +35,7 @@ public class RoleController {
         return Result.success(roleService.getById(id));
     }
 
+    @AuditLog(module = "角色管理", action = "新增角色")
     @PostMapping
     @SaCheckPermission("sys:role:create")
     public Result<Void> create(@Valid @RequestBody RoleCreateRequest request) {
@@ -41,6 +43,7 @@ public class RoleController {
         return Result.success();
     }
 
+    @AuditLog(module = "角色管理", action = "修改角色")
     @PutMapping("/{id}")
     @SaCheckPermission("sys:role:update")
     public Result<Void> update(@PathVariable Long id, @RequestBody RoleUpdateRequest request) {
@@ -48,6 +51,7 @@ public class RoleController {
         return Result.success();
     }
 
+    @AuditLog(module = "角色管理", action = "删除角色")
     @DeleteMapping("/{id}")
     @SaCheckPermission("sys:role:delete")
     public Result<Void> delete(@PathVariable Long id) {
@@ -61,6 +65,7 @@ public class RoleController {
         return Result.success(roleService.getMenuIds(id));
     }
 
+    @AuditLog(module = "角色管理", action = "分配权限")
     @PutMapping("/{id}/menus")
     @SaCheckPermission("sys:role:update")
     public Result<Void> assignMenus(@PathVariable Long id, @Valid @RequestBody AssignPermissionRequest request) {

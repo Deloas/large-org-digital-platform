@@ -3,6 +3,7 @@ package org.largeorg.platform.system.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.validation.Valid;
+import org.largeorg.platform.audit.annotation.AuditLog;
 import org.largeorg.platform.common.Result;
 import org.largeorg.platform.system.dto.UserCreateRequest;
 import org.largeorg.platform.system.dto.UserUpdateRequest;
@@ -37,6 +38,7 @@ public class UserController {
         return Result.success(userService.getById(id));
     }
 
+    @AuditLog(module = "用户管理", action = "新增用户")
     @PostMapping
     @SaCheckPermission("sys:user:create")
     public Result<Void> create(@Valid @RequestBody UserCreateRequest request) {
@@ -44,6 +46,7 @@ public class UserController {
         return Result.success();
     }
 
+    @AuditLog(module = "用户管理", action = "修改用户")
     @PutMapping("/{id}")
     @SaCheckPermission("sys:user:update")
     public Result<Void> update(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
@@ -51,6 +54,7 @@ public class UserController {
         return Result.success();
     }
 
+    @AuditLog(module = "用户管理", action = "启用/禁用用户")
     @PutMapping("/{id}/status")
     @SaCheckPermission("sys:user:update")
     public Result<Void> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
@@ -58,6 +62,7 @@ public class UserController {
         return Result.success();
     }
 
+    @AuditLog(module = "用户管理", action = "重置密码")
     @PutMapping("/{id}/reset-password")
     @SaCheckPermission("sys:user:update")
     public Result<Void> resetPassword(@PathVariable Long id) {

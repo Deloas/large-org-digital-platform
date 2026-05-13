@@ -55,14 +55,25 @@ INSERT INTO sys_menu (id, parent_id, name, type, path, component, icon, permissi
 (8, 5, '部门管理', 'menu', '/system/depts', 'system/DeptList', 'Grid', 'sys:dept:list',   3, 1),
 (9, 5, '菜单管理', 'menu', '/system/menus', 'system/MenuList', 'Menu',   'sys:menu:list',   4, 1);
 
+-- 二级菜单 - 安全审计
+INSERT INTO sys_menu (id, parent_id, name, type, path, component, icon, permission, sort_order, visible) VALUES
+(10, 4, '登录日志', 'menu', '/audit/login-logs', 'audit/LoginLogList', 'Notebook', 'audit:log', 1, 1),
+(11, 4, '操作日志', 'menu', '/audit/operation-logs', 'audit/OperationLogList', 'Tickets', 'audit:log', 2, 1);
+
 -- 六、admin 角色菜单权限（全部菜单）
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT 1, id FROM sys_menu;
 
--- 七、employee / dept_manager / finance / procurement / auditor 仅分配工作台
+-- 七、employee / dept_manager / finance / procurement 仅分配工作台
 INSERT INTO sys_role_menu (role_id, menu_id) VALUES
 (2, 1),
 (3, 1),
 (4, 1),
-(5, 1),
-(6, 1);
+(5, 1);
+
+-- 八、auditor 角色菜单授权：工作台 + 安全审计（含登录日志、操作日志）
+INSERT INTO sys_role_menu (role_id, menu_id) VALUES
+(6, 1),
+(6, 4),
+(6, 10),
+(6, 11);

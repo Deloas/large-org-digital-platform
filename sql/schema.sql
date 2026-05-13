@@ -83,3 +83,45 @@ CREATE TABLE IF NOT EXISTS sys_role_menu (
     menu_id  BIGINT NOT NULL,
     UNIQUE INDEX uk_role_menu (role_id, menu_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单关联表';
+
+-- ===================================================
+-- 第三阶段：日志审计基础能力 - 建表脚本
+-- ===================================================
+
+-- 登录日志表
+CREATE TABLE IF NOT EXISTS audit_login_log (
+    id           BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    user_id      BIGINT       COMMENT '用户ID（登录失败时可能为null）',
+    username     VARCHAR(64)  NOT NULL COMMENT '用户名',
+    login_ip     VARCHAR(45)  COMMENT '登录IP',
+    user_agent   VARCHAR(512) COMMENT 'User-Agent',
+    status       VARCHAR(16)  NOT NULL COMMENT 'success / fail',
+    fail_reason  VARCHAR(255) COMMENT '失败原因',
+    login_time   DATETIME     NOT NULL COMMENT '登录时间',
+    created_at   DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
+    INDEX idx_username (username),
+    INDEX idx_status (status),
+    INDEX idx_login_time (login_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='登录日志表';
+
+-- 操作日志表
+CREATE TABLE IF NOT EXISTS audit_operation_log (
+    id             BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    user_id        BIGINT       NOT NULL COMMENT '操作人ID',
+    username       VARCHAR(64)  NOT NULL COMMENT '操作人用户名',
+    module         VARCHAR(64)  NOT NULL COMMENT '操作模块',
+    action         VARCHAR(64)  NOT NULL COMMENT '操作动作',
+    request_path   VARCHAR(255) COMMENT '请求路径',
+    request_method VARCHAR(10)  COMMENT '请求方法',
+    request_params TEXT         COMMENT '请求参数摘要',
+    result         VARCHAR(16)  NOT NULL COMMENT 'success / fail',
+    error_msg      VARCHAR(512) COMMENT '异常信息摘要',
+    cost_ms        BIGINT       COMMENT '耗时（毫秒）',
+    ip             VARCHAR(45)  COMMENT '操作IP',
+    user_agent     VARCHAR(512) COMMENT 'User-Agent',
+    created_at     DATETIME     NOT NULL COMMENT '操作时间',
+    INDEX idx_username (username),
+    INDEX idx_module (module),
+    INDEX idx_result (result),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志表';

@@ -42,7 +42,22 @@ const routes: RouteRecordRaw[] = [
         path: 'audit',
         name: 'Audit',
         component: () => import('@/views/audit/AuditView.vue'),
-        meta: { title: '安全审计', icon: 'Lock' }
+        redirect: '/audit/login-logs',
+        meta: { title: '安全审计', icon: 'Lock' },
+        children: [
+          {
+            path: 'login-logs',
+            name: 'AuditLoginLogs',
+            component: () => import('@/views/audit/LoginLogList.vue'),
+            meta: { title: '登录日志' }
+          },
+          {
+            path: 'operation-logs',
+            name: 'AuditOperationLogs',
+            component: () => import('@/views/audit/OperationLogList.vue'),
+            meta: { title: '操作日志' }
+          }
+        ]
       },
       {
         path: 'system',

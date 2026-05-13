@@ -1,0 +1,23 @@
+package org.largeorg.platform.audit.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Data
+@TableName("audit_login_log")
+public class AuditLoginLog {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    private Long userId;
+    private String username;
+    private String loginIp;
+    private String userAgent;
+    private String status;
+    private String failReason;
+    private LocalDateTime loginTime;
+    private LocalDateTime createdAt;
+}
