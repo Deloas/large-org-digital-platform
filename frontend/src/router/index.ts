@@ -42,9 +42,15 @@ const routes: RouteRecordRaw[] = [
         path: 'audit',
         name: 'Audit',
         component: () => import('@/views/audit/AuditView.vue'),
-        redirect: '/audit/login-logs',
+        redirect: '/audit/dashboard',
         meta: { title: '安全审计', icon: 'Lock' },
         children: [
+          {
+            path: 'dashboard',
+            name: 'AuditDashboard',
+            component: () => import('@/views/audit/SecurityDashboard.vue'),
+            meta: { title: '安全看板' }
+          },
           {
             path: 'login-logs',
             name: 'AuditLoginLogs',
@@ -56,6 +62,18 @@ const routes: RouteRecordRaw[] = [
             name: 'AuditOperationLogs',
             component: () => import('@/views/audit/OperationLogList.vue'),
             meta: { title: '操作日志' }
+          },
+          {
+            path: 'alerts',
+            name: 'AuditAlerts',
+            component: () => import('@/views/audit/AlertList.vue'),
+            meta: { title: '安全告警' }
+          },
+          {
+            path: 'blacklist',
+            name: 'AuditBlacklist',
+            component: () => import('@/views/audit/BlacklistList.vue'),
+            meta: { title: 'IP黑名单' }
           }
         ]
       },
