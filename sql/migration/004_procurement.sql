@@ -2,6 +2,7 @@
 -- 第四阶段：采购审批与合同归档模块 - 增量迁移脚本
 -- 适用于已有第三阶段数据的数据库升级
 -- 执行方式：mysql -u root -p large_org_platform < sql/migration/004_procurement.sql
+-- 菜单 ID 范围：50-54
 -- ===================================================
 
 -- 一、创建采购申请表（IF NOT EXISTS 保证幂等）
@@ -94,40 +95,71 @@ CREATE TABLE IF NOT EXISTS payment_node (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='付款节点表';
 
--- 六、新增采购管理子菜单（INSERT IGNORE 保证幂等，ID 范围 20-24）
+-- ===================================================
+-- 六、清理旧的错误授权（20-22 原为系统管理菜单操作权限，误分配给非 admin 角色）
+-- ===================================================
+DELETE rm
+FROM sys_role_menu rm
+JOIN sys_role r ON rm.role_id = r.id
+WHERE r.role_code IN ('employee', 'procurement', 'dept_manager', 'finance')
+  AND rm.menu_id IN (20, 21, 22);
+
+-- 七、清理旧的错误采购菜单 23/24（如果有）
+DELETE FROM sys_role_menu WHERE menu_id IN (23, 24);
+DELETE FROM sys_menu
+WHERE id IN (23, 24)
+  AND path LIKE '/procurement%';
+
+-- ===================================================
+-- 八、新增采购管理子菜单（INSERT IGNORE 保证幂等，ID 范围 50-54）
+-- ===================================================
 INSERT IGNORE INTO sys_menu (id, parent_id, name, type, path, component, icon, permission, sort_order, visible) VALUES
-(20, 3, '采购申请',   'menu', '/procurement/requests',    'procurement/RequestList',      'Document', 'procurement:request:list',    1, 1),
-(21, 3, '待办审批',   'menu', '/procurement/approvals',   'procurement/ApprovalPending',  'Tickets',  'procurement:approval:pending', 2, 1),
-(22, 3, '供应商管理', 'menu', '/procurement/suppliers',   'procurement/SupplierList',     'Avatar',   'procurement:supplier:list',    3, 1),
-(23, 3, '合同管理',   'menu', '/procurement/contracts',   'procurement/ContractList',     'Notebook', 'procurement:contract:list',    4, 1),
-(24, 3, '付款管理',   'menu', '/procurement/payments',    'procurement/PaymentManagement','Grid',     'procurement:payment:list',     5, 1);
+(50, 3, '采购申请',   'menu', '/procurement/requests',    'procurement/RequestList',      'Document', 'procurement:request:list',    1, 1),
+(51, 3, '待办审批',   'menu', '/procurement/approvals',   'procurement/ApprovalPending',  'Tickets',  'procurement:approval:pending', 2, 1),
+(52, 3, '供应商管理', 'menu', '/procurement/suppliers',   'procurement/SupplierList',     'Avatar',   'procurement:supplier:list',    3, 1),
+(53, 3, '合同管理',   'menu', '/procurement/contracts',   'procurement/ContractList',     'Notebook', 'procurement:contract:list',    4, 1),
+(54, 3, '付款管理',   'menu', '/procurement/payments',    'procurement/PaymentManagement','Grid',     'procurement:payment:list',     5, 1);
 
--- 七、admin 角色获得全部采购子菜单（INSERT IGNORE 保证幂等）
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES
-(1, 20),
-(1, 21),
-(1, 22),
-(1, 23),
-(1, 24);
+-- ===================================================
+-- 九、角色授权（通过 role_code 查询 role_id，保证可迁移）
+-- ===================================================
 
--- 八、procurement 角色获得全部采购子菜单
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES
-(5, 20),
-(5, 21),
-(5, 22),
-(5, 23),
-(5, 24);
+-- admin 角色获得全部采购子菜单
+INSERT IGNORE INTO sys_role_menu (role_id, menu_id)
+SELECT r.id, m.id
+FROM sys_role r
+CROSS JOIN sys_menu m
+WHERE r.role_code = 'admin'
+  AND m.id IN (50, 51, 52, 53, 54);
 
--- 九、employee 角色获得采购申请菜单
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES
-(2, 20);
+-- procurement 角色获得全部采购子菜单
+INSERT IGNORE INTO sys_role_menu (role_id, menu_id)
+SELECT r.id, m.id
+FROM sys_role r
+CROSS JOIN sys_menu m
+WHERE r.role_code = 'procurement'
+  AND m.id IN (50, 51, 52, 53, 54);
 
--- 十、dept_manager 角色获得采购申请 + 待办审批菜单
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES
-(3, 20),
-(3, 21);
+-- employee 角色获得采购申请菜单（50）
+INSERT IGNORE INTO sys_role_menu (role_id, menu_id)
+SELECT r.id, m.id
+FROM sys_role r
+CROSS JOIN sys_menu m
+WHERE r.role_code = 'employee'
+  AND m.id = 50;
 
--- 十一、finance 角色获得采购申请 + 待办审批菜单
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES
-(4, 20),
-(4, 21);
+-- dept_manager 角色获得采购申请 + 待办审批（50, 51）
+INSERT IGNORE INTO sys_role_menu (role_id, menu_id)
+SELECT r.id, m.id
+FROM sys_role r
+CROSS JOIN sys_menu m
+WHERE r.role_code = 'dept_manager'
+  AND m.id IN (50, 51);
+
+-- finance 角色获得采购申请 + 待办审批（50, 51）
+INSERT IGNORE INTO sys_role_menu (role_id, menu_id)
+SELECT r.id, m.id
+FROM sys_role r
+CROSS JOIN sys_menu m
+WHERE r.role_code = 'finance'
+  AND m.id IN (50, 51);

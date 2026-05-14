@@ -64,7 +64,7 @@
           <el-tag type="primary" size="small" style="margin-left:6px">溯源</el-tag>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="8" v-if="userStore.hasPermission('knowledge:qa:log')">
         <el-card shadow="never" class="nav-card" @click="$router.push('/knowledge/qa/logs')">
           <el-icon :size="40" class="nav-icon"><Tickets /></el-icon>
           <h3 class="nav-title">问答日志</h3>
@@ -81,6 +81,9 @@
 import { ref, onMounted } from 'vue'
 import { Folder, Grid, ChatDotRound, CircleCheck, Tickets } from '@element-plus/icons-vue'
 import { getDocumentList, getQaLogs } from '@/api/knowledge'
+import { useUserStore } from '@/store/user'
+
+const userStore = useUserStore()
 
 const stats = ref({
   documentCount: 0,
@@ -99,9 +102,13 @@ onMounted(async () => {
     const readyRes = await getDocumentList({ pageNum: 1, pageSize: 1, status: 'ready' })
     stats.value.readyCount = readyRes.data.data.total || 0
 
-    // 统计问答次数
-    const qaRes = await getQaLogs({ page: 1, pageSize: 1 })
-    stats.value.qaCount = qaRes.data.data.total || 0
+    // 统计问答次数（仅拥有 knowledge:qa:log 权限的用户才请求）
+    if (userStore.hasPermission('knowledge:qa:log')) {
+      try {
+        const qaRes = await getQaLogs({ page: 1, pageSize: 1 })
+        stats.value.qaCount = qaRes.data.data.total || 0
+      } catch { /* 忽略 */ }
+    }
 
     // 统计 chunk（遍历文档）
     const allDocs = await getDocumentList({ pageNum: 1, pageSize: 100 })
