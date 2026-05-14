@@ -36,7 +36,76 @@ const routes: RouteRecordRaw[] = [
         path: 'procurement',
         name: 'Procurement',
         component: () => import('@/views/procurement/ProcurementView.vue'),
-        meta: { title: '采购管理', icon: 'ShoppingCart' }
+        redirect: '/procurement/requests',
+        meta: { title: '采购管理', icon: 'ShoppingCart' },
+        children: [
+          {
+            path: 'requests',
+            name: 'ProcurementRequests',
+            component: () => import('@/views/procurement/RequestList.vue'),
+            meta: { title: '采购申请' }
+          },
+          {
+            path: 'requests/create',
+            name: 'ProcurementRequestCreate',
+            component: () => import('@/views/procurement/RequestForm.vue'),
+            meta: { title: '创建采购申请' }
+          },
+          {
+            path: 'requests/:id/edit',
+            name: 'ProcurementRequestEdit',
+            component: () => import('@/views/procurement/RequestForm.vue'),
+            meta: { title: '编辑采购申请' }
+          },
+          {
+            path: 'requests/:id',
+            name: 'ProcurementRequestDetail',
+            component: () => import('@/views/procurement/RequestDetail.vue'),
+            meta: { title: '采购申请详情' }
+          },
+          {
+            path: 'approvals',
+            name: 'ProcurementApprovals',
+            component: () => import('@/views/procurement/ApprovalPending.vue'),
+            meta: { title: '待办审批' }
+          },
+          {
+            path: 'suppliers',
+            name: 'ProcurementSuppliers',
+            component: () => import('@/views/procurement/SupplierList.vue'),
+            meta: { title: '供应商管理' }
+          },
+          {
+            path: 'contracts',
+            name: 'ProcurementContracts',
+            component: () => import('@/views/procurement/ContractList.vue'),
+            meta: { title: '合同管理' }
+          },
+          {
+            path: 'contracts/create',
+            name: 'ProcurementContractCreate',
+            component: () => import('@/views/procurement/ContractForm.vue'),
+            meta: { title: '创建合同' }
+          },
+          {
+            path: 'contracts/:id/edit',
+            name: 'ProcurementContractEdit',
+            component: () => import('@/views/procurement/ContractForm.vue'),
+            meta: { title: '编辑合同' }
+          },
+          {
+            path: 'contracts/:id',
+            name: 'ProcurementContractDetail',
+            component: () => import('@/views/procurement/ContractDetail.vue'),
+            meta: { title: '合同详情' }
+          },
+          {
+            path: 'payments',
+            name: 'ProcurementPayments',
+            component: () => import('@/views/procurement/PaymentManagement.vue'),
+            meta: { title: '付款管理' }
+          }
+        ]
       },
       {
         path: 'audit',
