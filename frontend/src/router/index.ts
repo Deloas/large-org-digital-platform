@@ -28,9 +28,35 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'knowledge',
-        name: 'Knowledge',
         component: () => import('@/views/knowledge/KnowledgeView.vue'),
-        meta: { title: '知识库', icon: 'Document' }
+        redirect: '/knowledge',
+        meta: { title: '知识库', icon: 'Document' },
+        children: [
+          {
+            path: '',
+            name: 'KnowledgeHome',
+            component: () => import('@/views/knowledge/KnowledgeHome.vue'),
+            meta: { title: '知识库首页' }
+          },
+          {
+            path: 'documents',
+            name: 'KnowledgeDocuments',
+            component: () => import('@/views/knowledge/DocumentList.vue'),
+            meta: { title: '文档管理' }
+          },
+          {
+            path: 'qa',
+            name: 'KnowledgeQa',
+            component: () => import('@/views/knowledge/QaChat.vue'),
+            meta: { title: '智能问答' }
+          },
+          {
+            path: 'qa/logs',
+            name: 'KnowledgeQaLogs',
+            component: () => import('@/views/knowledge/QaLogList.vue'),
+            meta: { title: '问答日志' }
+          }
+        ]
       },
       {
         path: 'procurement',
