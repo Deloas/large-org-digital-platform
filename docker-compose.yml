@@ -1,0 +1,33 @@
+version: '3.8'
+
+# =============================================================================
+# 大型组织数字化办公与安全审计一体化平台 — Docker Compose
+# 用途：一键启动 MySQL 数据库服务
+# 后端和前端请使用各自开发命令本地启动，参见 README.md
+# =============================================================================
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: large-org-platform-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: large_org_platform
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./sql/init_data.sql:/docker-entrypoint-initdb.d/02-init_data.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql-data:
