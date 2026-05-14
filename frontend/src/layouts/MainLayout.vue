@@ -80,7 +80,8 @@ import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Monitor, Document, ShoppingCart, Lock, Setting,
-  Platform, User, Avatar, Menu, Grid, Notebook, Tickets
+  Platform, User, Avatar, Menu, Grid, Notebook, Tickets,
+  Folder, ChatDotRound
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 
@@ -95,7 +96,7 @@ onMounted(async () => {
 })
 
 const iconMap: Record<string, any> = {
-  Monitor, Document, ShoppingCart, Lock, Setting, User, Avatar, Menu, Grid, Notebook, Tickets
+  Monitor, Document, ShoppingCart, Lock, Setting, User, Avatar, Menu, Grid, Notebook, Tickets, Folder, ChatDotRound
 }
 
 const activeMenu = computed(() => route.path)
