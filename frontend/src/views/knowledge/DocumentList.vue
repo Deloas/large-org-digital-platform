@@ -158,10 +158,13 @@ const tableData = ref<KnowledgeDocument[]>([])
 const loading = ref(false)
 
 // 上传相关
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+
 const showUpload = ref(false)
 const uploading = ref(false)
 const uploadForm = ref({ title: '' })
 const selectedFile = ref<File | null>(null)
+const uploadRef = ref<any>(null)
 
 // 详情相关
 const showDetailDialog = ref(false)
@@ -192,7 +195,24 @@ async function fetchList() {
 }
 
 function handleFileChange(file: any) {
-  selectedFile.value = file.raw || null
+  const raw = file.raw as File
+  if (!raw) return
+
+  const ext = raw.name.split('.').pop()?.toUpperCase()
+  const validExts = ['PDF', 'DOCX', 'TXT']
+  if (!validExts.includes(ext || '')) {
+    ElMessage.error('仅支持 PDF / DOCX / TXT 格式')
+    uploadRef.value?.clearFiles()
+    selectedFile.value = null
+    return
+  }
+  if (raw.size > MAX_FILE_SIZE) {
+    ElMessage.error('文件大小不能超过 10MB')
+    uploadRef.value?.clearFiles()
+    selectedFile.value = null
+    return
+  }
+  selectedFile.value = raw
 }
 
 function handleFileRemove() {
@@ -217,6 +237,12 @@ function beforeUpload(file: File) {
 async function handleUpload() {
   if (!selectedFile.value) {
     ElMessage.warning('请先选择文件')
+    return
+  }
+  if (selectedFile.value.size > MAX_FILE_SIZE) {
+    ElMessage.error('文件大小不能超过 10MB')
+    selectedFile.value = null
+    uploadRef.value?.clearFiles()
     return
   }
   uploading.value = true

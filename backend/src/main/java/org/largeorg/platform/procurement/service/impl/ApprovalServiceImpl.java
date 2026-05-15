@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,7 +40,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         } else if ("dept_manager".equals(roleCode)) {
             wrapper.eq(ProcurementApproval::getExpectedRole, "dept_manager");
             // Filter by dept: only show approvals for requests in the manager's dept
-            List<Long> requestIds = getRequestIdsByDept(deptId);
+            List<Long> requestIds = new ArrayList<>(getRequestIdsByDept(deptId));
             if (requestIds.isEmpty()) {
                 requestIds.add(-1L);
             }

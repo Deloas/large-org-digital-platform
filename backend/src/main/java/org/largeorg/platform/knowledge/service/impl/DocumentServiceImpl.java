@@ -31,6 +31,9 @@ import java.util.stream.Collectors;
 public class DocumentServiceImpl implements DocumentService {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final int MAX_CONTENT_LENGTH = 100000;      // 存储最大字符数
+    private static final int MAX_CHUNKS = 300;                 // 最大 chunk 数
+    private static final int MAX_CHUNK_LENGTH = 2000;          // 单个 chunk 最大字符数
 
     private final KnowledgeDocumentMapper documentMapper;
     private final KnowledgeChunkMapper chunkMapper;
@@ -54,7 +57,6 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    @Transactional
     public DocumentVo upload(MultipartFile file, String title, Long userId, String username) {
         if (file.isEmpty()) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "文件不能为空");
@@ -91,55 +93,81 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "保存文件失败");
         }
 
-        // 解析文档文本
-        String contentText;
-        try {
-            contentText = parsingService.parse(fileBytes, fileType);
-        } catch (Exception e) {
-            try { Files.deleteIfExists(filePath); } catch (IOException ignored) {}
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文档解析失败: " + e.getMessage());
-        }
-
-        // 创建文档记录
+        // 创建文档记录（先入库，再解析，解析失败文档保留为 failed 状态）
         KnowledgeDocument doc = new KnowledgeDocument();
+        try {
         doc.setTitle(title != null && !title.isBlank() ? title : originalName);
         doc.setFileName(originalName);
         doc.setFileType(fileType);
         doc.setFileSize(file.getSize());
         doc.setFilePath(filePath.toString());
-        doc.setContentText(contentText);
+        doc.setContentText("");
         doc.setStatus("processing");
         doc.setUploadUserId(userId);
         doc.setUploadUsername(username);
         documentMapper.insert(doc);
 
-        // 文本切分 + embedding
+        // 解析文档文本（解析失败不抛异常，文档标记为 failed）
+        String contentText = "";
         try {
-            List<String> chunks = chunkingService.split(contentText);
-            List<KnowledgeChunk> chunkEntities = new ArrayList<>();
-            for (int i = 0; i < chunks.size(); i++) {
-                KnowledgeChunk ck = new KnowledgeChunk();
-                ck.setDocumentId(doc.getId());
-                ck.setChunkIndex(i);
-                ck.setContent(chunks.get(i));
-                ck.setCharCount(chunks.get(i).length());
-                float[] emb = embeddingClient.embed(chunks.get(i));
-                ck.setEmbedding(toJsonArray(emb));
-                chunkEntities.add(ck);
+            contentText = parsingService.parse(fileBytes, fileType);
+            if (contentText.length() > MAX_CONTENT_LENGTH) {
+                contentText = contentText.substring(0, MAX_CONTENT_LENGTH);
             }
-            for (KnowledgeChunk ck : chunkEntities) {
-                chunkMapper.insert(ck);
-            }
-            doc.setChunkCount(chunks.size());
-            doc.setStatus("ready");
+            doc.setContentText(contentText);
         } catch (Exception e) {
             doc.setStatus("failed");
+            String errMsg = e.getMessage();
+            if (errMsg == null) errMsg = "未知解析错误";
+            if (errMsg.length() > 500) errMsg = errMsg.substring(0, 500);
+            doc.setContentText("PDF 无可提取文本，可能是扫描版、加密文件或特殊编码文件。错误: " + errMsg);
             documentMapper.updateById(doc);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文本切分或向量化失败: " + e.getMessage());
+            return toVo(doc);
+        }
+
+        // 文本切分 + embedding（限制 chunk 数量，防止超大数据集）
+        try {
+            List<String> rawChunks = chunkingService.split(contentText);
+            // 限制最大 chunk 数
+            List<String> chunks = rawChunks.size() > MAX_CHUNKS
+                    ? rawChunks.subList(0, MAX_CHUNKS) : rawChunks;
+            int successCount = 0;
+            for (int i = 0; i < chunks.size(); i++) {
+                try {
+                    String chunkContent = chunks.get(i);
+                    if (chunkContent.length() > MAX_CHUNK_LENGTH) {
+                        chunkContent = chunkContent.substring(0, MAX_CHUNK_LENGTH);
+                    }
+                    KnowledgeChunk ck = new KnowledgeChunk();
+                    ck.setDocumentId(doc.getId());
+                    ck.setChunkIndex(i);
+                    ck.setContent(chunkContent);
+                    ck.setCharCount(chunkContent.length());
+                    float[] emb = embeddingClient.embed(chunkContent);
+                    ck.setEmbedding(toJsonArray(emb));
+                    chunkMapper.insert(ck);
+                    successCount++;
+                } catch (Exception ignored) {
+                    // 单个 chunk 失败不影响其他 chunk
+                }
+            }
+            doc.setChunkCount(successCount);
+            doc.setStatus(successCount > 0 ? "ready" : "partial");
+        } catch (Exception e) {
+            doc.setStatus("partial");
         }
         documentMapper.updateById(doc);
 
         return toVo(doc);
+        } catch (Exception outerEx) {
+            // 兜底：任何未预见的异常都不应返回 500
+            try {
+                doc.setStatus("failed");
+                doc.setContentText("处理异常: " + (outerEx.getMessage() != null ? outerEx.getMessage().substring(0, Math.min(outerEx.getMessage().length(), 400)) : "未知错误"));
+                documentMapper.updateById(doc);
+            } catch (Exception ignored) {}
+            return toVo(doc);
+        }
     }
 
     @Override

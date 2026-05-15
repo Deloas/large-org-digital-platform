@@ -1,6 +1,7 @@
 package org.largeorg.platform.knowledge.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.largeorg.platform.audit.annotation.AuditLog;
@@ -25,7 +26,7 @@ public class DocumentController {
 
     @AuditLog(module = "文档管理", action = "上传文档")
     @PostMapping
-    @SaCheckPermission("knowledge:doc:upload")
+    @SaCheckRole("admin")
     public Result<DocumentVo> upload(@RequestParam("file") MultipartFile file,
                                      @RequestParam(value = "title", required = false) String title) {
         long userId = StpUtil.getLoginIdAsLong();
@@ -51,7 +52,7 @@ public class DocumentController {
 
     @AuditLog(module = "文档管理", action = "删除文档")
     @DeleteMapping("/{id}")
-    @SaCheckPermission("knowledge:doc:delete")
+    @SaCheckRole("admin")
     public Result<Void> delete(@PathVariable Long id) {
         documentService.delete(id);
         return Result.success();
